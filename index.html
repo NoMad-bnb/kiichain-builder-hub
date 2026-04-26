@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KiiChain Builder Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p:#6B21FF; --pl:#8B5CF6; --pd:rgba(107,33,255,0.12);
+  --cy:#22D3EE; --go:#F59E0B; --gr:#10B981; --re:#EF4444;
+  --bg:#050308; --bg1:#0A0612; --bg2:#0F0A1A;
+  --sf:rgba(107,33,255,0.06); --sfh:rgba(107,33,255,0.12);
+  --bd:rgba(139,92,246,0.15); --bdb:rgba(139,92,246,0.35);
+  --tx:#EDE9FE; --tm:rgba(237,233,254,0.45); --td:rgba(237,233,254,0.25);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:'Cabinet Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
+
+/* CURSOR */
+.cur{position:fixed;width:8px;height:8px;background:var(--cy);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:screen;transform:translate(-50%,-50%);}
+.cur-ring{position:fixed;width:30px;height:30px;border:1px solid rgba(34,211,238,0.3);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
+
+/* PARTICLE CANVAS - full screen fixed */
+#pcanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");z-index:1;pointer-events:none;opacity:.7;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 60px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,3,8,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-logo svg{width:28px;height:28px;}
+.nav-logo-text{font-size:16px;font-weight:800;letter-spacing:-.5px;}
+.nav-logo-text em{color:var(--pl);font-style:normal;}
+.nav-pill{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;background:var(--pd);border:1px solid rgba(139,92,246,.3);color:var(--pl);padding:3px 10px;border-radius:20px;}
+.nav-links{display:flex;gap:2px;align-items:center;}
+.nav-links a{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.3px;color:var(--tm);text-decoration:none;padding:6px 12px;border-radius:3px;transition:all .2s;}
+.nav-links a:hover{color:var(--tx);background:var(--sf);}
+.nav-cta{background:var(--p);color:white!important;margin-left:8px;}
+.nav-cta:hover{background:var(--pl)!important;}
+
+/* SECTIONS */
+section{position:relative;z-index:2;padding:100px 60px;}
+.s-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--pl);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.s-tag::before{content:'//';color:var(--cy);}
+.s-title{font-size:clamp(28px,4vw,50px);font-weight:900;letter-spacing:-2.5px;line-height:1.02;margin-bottom:14px;}
+.s-desc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tm);line-height:1.85;max-width:620px;margin-bottom:52px;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 40px 80px;position:relative;z-index:2;}
+.hero-eye{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--cy);display:flex;align-items:center;gap:14px;margin-bottom:32px;opacity:0;animation:fadeUp .9s ease .1s forwards;}
+.hero-eye::before,.hero-eye::after{content:'';height:1px;width:40px;background:linear-gradient(90deg,transparent,var(--cy));opacity:.5;}
+.hero-eye::after{background:linear-gradient(90deg,var(--cy),transparent);}
+.hero-h{font-size:clamp(54px,9vw,108px);font-weight:900;line-height:.9;letter-spacing:-4px;margin-bottom:30px;opacity:0;animation:fadeUp .9s ease .25s forwards;}
+.hero-h .l1{display:block;color:var(--tx);}
+.hero-h .l2{display:block;background:linear-gradient(135deg,var(--pl) 0%,var(--cy) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--tm);max-width:500px;line-height:1.9;margin-bottom:48px;opacity:0;animation:fadeUp .9s ease .4s forwards;}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeUp .9s ease .55s forwards;}
+.btn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;padding:13px 28px;border-radius:4px;text-decoration:none;cursor:none;transition:all .25s;display:inline-flex;align-items:center;gap:8px;}
+.btn-p{background:var(--p);color:white;}
+.btn-p:hover{background:var(--pl);transform:translateY(-2px);box-shadow:0 12px 40px rgba(107,33,255,.4);}
+.btn-g{background:transparent;color:var(--tm);border:1px solid var(--bd);}
+.btn-g:hover{color:var(--tx);border-color:var(--bdb);background:var(--sf);}
+
+/* STATS */
+.stats-bar{position:relative;z-index:2;margin:0 60px;display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--bd);border-radius:4px;overflow:hidden;opacity:0;animation:fadeUp .9s ease .7s forwards;}
+.si{padding:22px 24px;text-align:center;border-right:1px solid var(--bd);background:var(--sf);transition:background .3s;}
+.si:last-child{border-right:none;}
+.si:hover{background:var(--sfh);}
+.sv{font-size:24px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,var(--pl),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--td);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+
+/* GRIDS */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+
+/* MODULES */
+.mod{background:var(--bg1);padding:40px 34px;position:relative;overflow:hidden;cursor:none;transition:background .4s;}
+.mod::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2));transform:scaleX(0);transition:transform .4s;transform-origin:left;}
+.mod:hover::before{transform:scaleX(1);}
+.mod::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,var(--ag) 0%,transparent 65%);opacity:0;transition:opacity .4s;}
+.mod:hover::after{opacity:1;}
+.mod:hover{background:rgba(10,6,18,.98);}
+.mod.c1{--a1:#6B21FF;--a2:#22D3EE;--ag:rgba(107,33,255,.1);}
+.mod.c2{--a1:#22D3EE;--a2:#6B21FF;--ag:rgba(34,211,238,.07);}
+.mod.c3{--a1:#F59E0B;--a2:#EF4444;--ag:rgba(245,158,11,.07);}
+.mod.c4{--a1:#10B981;--a2:#6B21FF;--ag:rgba(16,185,129,.07);}
+.mod.c5{--a1:#EF4444;--a2:#F59E0B;--ag:rgba(239,68,68,.07);}
+.mod.c6{--a1:#8B5CF6;--a2:#F59E0B;--ag:rgba(139,92,246,.07);background:rgba(107,33,255,.03);}
+.mn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--td);letter-spacing:2px;margin-bottom:20px;position:relative;z-index:1;}
+.mi{width:44px;height:44px;margin-bottom:18px;display:flex;align-items:center;justify-content:center;border-radius:10px;position:relative;z-index:1;}
+.mi svg{width:24px;height:24px;}
+.mt{font-size:19px;font-weight:800;letter-spacing:-.5px;margin-bottom:10px;position:relative;z-index:1;}
+.mb{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tm);line-height:1.85;margin-bottom:24px;position:relative;z-index:1;}
+.tags{display:flex;flex-wrap:wrap;gap:6px;position:relative;z-index:1;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 9px;border-radius:2px;background:var(--sf);border:1px solid var(--bd);color:var(--td);}
+
+/* GENERIC CARD */
+.gc{background:var(--bg1);padding:32px 28px;transition:background .3s;}
+.gc:hover{background:var(--sf);}
+.gci{width:36px;height:36px;margin-bottom:14px;display:block;}
+.gci svg{width:100%;height:100%;}
+.gct{font-size:16px;font-weight:700;margin-bottom:8px;}
+.gcb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;}
+
+/* SVG ICON BASE */
+.icon-wrap{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;margin-bottom:18px;position:relative;z-index:1;}
+.icon-wrap svg{width:22px;height:22px;}
+
+/* CONCEPTS */
+.concepts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px;}
+.concept{background:var(--sf);border:1px solid var(--bd);border-radius:4px;padding:22px 20px;}
+.ct{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--cy);text-transform:uppercase;margin-bottom:8px;}
+.ch{font-size:14px;font-weight:700;margin-bottom:8px;}
+.cb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.step{background:var(--bg1);padding:30px 24px;transition:background .3s;}
+.step:hover{background:var(--sf);}
+.stn{font-size:48px;font-weight:900;color:rgba(107,33,255,.12);font-family:'JetBrains Mono',monospace;letter-spacing:-3px;margin-bottom:14px;}
+.stt{font-size:14px;font-weight:700;margin-bottom:7px;}
+.stb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;}
+.stc{margin-top:12px;background:rgba(0,0,0,.5);border:1px solid var(--bd);padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cy);border-radius:2px;}
+
+/* TABS */
+.tabs-wrap{background:var(--sf);border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.tabs-nav{display:flex;border-bottom:1px solid var(--bd);background:rgba(5,3,8,.6);overflow-x:auto;}
+.tabs-nav::-webkit-scrollbar{height:0;}
+.tnav{font-family:'JetBrains Mono',monospace;font-size:10px;padding:11px 18px;color:var(--tm);background:none;border:none;border-bottom:2px solid transparent;border-right:1px solid var(--bd);cursor:none;transition:all .2s;white-space:nowrap;flex-shrink:0;letter-spacing:.3px;}
+.tnav.on{color:var(--cy);border-bottom-color:var(--cy);background:rgba(34,211,238,.04);}
+.tnav:hover:not(.on){color:var(--tx);background:var(--sf);}
+.tpane{padding:32px;display:none;}
+.tpane.on{display:block;}
+pre{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.85;color:var(--tx);overflow-x:auto;white-space:pre;}
+.kw{color:var(--pl);}.fn{color:var(--cy);}.str{color:var(--go);}.cm{color:rgba(237,233,254,.28);font-style:italic;}.num{color:#F87171;}
+.pw{position:relative;}
+.cp{position:absolute;top:0;right:0;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--tm);background:var(--sf);border:1px solid var(--bd);padding:4px 11px;border-radius:2px;cursor:none;transition:all .2s;}
+.cp:hover{color:var(--cy);border-color:var(--cy);}
+
+/* NETWORK */
+.nc{background:var(--sf);border:1px solid var(--bd);border-radius:4px;overflow:hidden;margin-bottom:16px;}
+.nh{padding:12px 18px;border-bottom:1px solid var(--bd);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tm);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--gr);box-shadow:0 0 7px var(--gr);animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+table.ti{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;}
+table.ti tr{border-bottom:1px solid var(--bd);transition:background .2s;}
+table.ti tr:hover{background:var(--sfh);}
+table.ti tr:last-child{border-bottom:none;}
+table.ti td{padding:11px 16px;font-size:10.5px;}
+table.ti td:first-child{color:var(--tm);width:40%;}
+table.ti td:last-child{color:var(--cy);}
+.ep-wrap{padding:12px;display:flex;flex-direction:column;gap:7px;}
+.ep{background:rgba(0,0,0,.5);border:1px solid var(--bd);border-radius:3px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.epl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--td);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px;}
+.epv{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cy);word-break:break-all;}
+.epb{background:none;border:1px solid var(--bd);color:var(--td);font-family:'JetBrains Mono',monospace;font-size:8px;padding:3px 9px;border-radius:2px;cursor:none;transition:all .2s;flex-shrink:0;letter-spacing:.5px;}
+.epb:hover{color:var(--cy);border-color:var(--cy);}
+
+/* PRECOMPILES */
+.pci{background:var(--bg1);padding:20px 24px;transition:background .2s;}
+.pci:hover{background:var(--sf);}
+.pcn{font-size:13px;font-weight:700;margin-bottom:4px;}
+.pca{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cy);margin-bottom:5px;word-break:break-all;}
+.pcd{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tm);line-height:1.7;}
+
+/* FAUCET */
+.fcg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px;}
+.fcmd{background:rgba(0,0,0,.45);border:1px solid var(--bd);border-radius:3px;padding:14px;}
+.fcn{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--go);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.fcc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cy);}
+.fcd{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tm);margin-top:4px;line-height:1.6;}
+
+/* LINKS */
+.lsec{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+.lcol h3{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.lnk{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--sf);border:1px solid var(--bd);border-radius:3px;text-decoration:none;margin-bottom:8px;transition:all .25s;cursor:none;}
+.lnk:hover{border-color:var(--bdb);background:var(--sfh);transform:translateX(3px);}
+.li{font-size:16px;flex-shrink:0;}
+.ln{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:2px;}
+.lu{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tm);}
+
+/* PROOF */
+.proof-box{background:linear-gradient(135deg,rgba(107,33,255,.07),rgba(34,211,238,.03));border:1px solid var(--bd);border-radius:4px;padding:52px;position:relative;overflow:hidden;}
+.proof-box::before{content:'VERIFIED';position:absolute;right:-40px;top:50%;transform:translateY(-50%) rotate(90deg);font-size:88px;font-weight:900;color:rgba(107,33,255,.04);pointer-events:none;letter-spacing:-4px;}
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.pi{background:rgba(5,3,8,.7);border:1px solid var(--bd);border-radius:3px;padding:20px;transition:border-color .25s;cursor:none;}
+.pi:hover{border-color:var(--bdb);}
+.pil{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--td);text-transform:uppercase;margin-bottom:8px;}
+.piv{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--cy);word-break:break-all;line-height:1.6;}
+.ok{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--gr);padding:3px 10px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+
+/* CALLOUTS */
+.info{background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.15);border-radius:3px;padding:13px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;margin-top:14px;}
+.info strong{color:var(--cy);}
+.warn{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:3px;padding:13px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;margin-top:14px;}
+.warn strong{color:var(--go);}
+.okbox{background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.15);border-radius:3px;padding:13px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);line-height:1.8;margin-top:14px;}
+.okbox strong{color:var(--gr);}
+
+/* FOOTER */
+footer{position:relative;z-index:2;border-top:1px solid var(--bd);padding:36px 60px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.fl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tm);}
+.fr{display:flex;gap:24px;flex-wrap:wrap;}
+.fr a{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tm);text-decoration:none;transition:color .2s;}
+.fr a:hover{color:var(--pl);}
+
+/* ANIM */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.rev{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+.rev.in{opacity:1;transform:translateY(0);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--p);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="ring"></div>
+<canvas id="pcanvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="rgba(107,33,255,0.15)"/>
+      <path d="M7 7L7 21M7 14L14 7M14 7L21 14M21 14L21 21" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="lg" x1="7" y1="7" x2="21" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
+    </svg>
+    <span class="nav-logo-text"><em>Kii</em>Chain</span>
+    <span class="nav-pill">BUILDER HUB</span>
+  </div>
+  <div class="nav-links">
+    <a href="#basics">Basics</a>
+    <a href="#modules">Modules</a>
+    <a href="#deploy">Deploy</a>
+    <a href="#network">Network</a>
+    <a href="#precompiles">Precompiles</a>
+    <a href="#faucet">Faucet</a>
+    <a href="#links">Links</a>
+    <a href="#proof">Proof</a>
+    <a href="https://docs.kiiglobal.io" target="_blank" class="nav-cta">Official Docs</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eye">KiiChain Testnet Oro, Chain ID 1336</p>
+  <h1 class="hero-h">
+    <span class="l1">Build the Future</span>
+    <span class="l2">of Finance</span>
+  </h1>
+  <p class="hero-sub">A complete builder guide for KiiChain. Deploy smart contracts and build with RWA, Stablecoins, FX, CrediFi, and PayFi modules, from beginner to advanced.</p>
+  <div class="hero-actions">
+    <a href="#basics" class="btn btn-p">Start Here</a>
+    <a href="#deploy" class="btn btn-g">Jump to Deploy</a>
+    <a href="https://discord.com/invite/kiichain" target="_blank" class="btn btn-g">Join Discord</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar rev">
+  <div class="si"><div class="sv">12K</div><div class="sl">TPS</div></div>
+  <div class="si"><div class="sv">~1s</div><div class="sl">Block Time</div></div>
+  <div class="si"><div class="sv">100+</div><div class="sl">IBC Chains</div></div>
+  <div class="si"><div class="sv">1336</div><div class="sl">EVM Chain ID</div></div>
+  <div class="si"><div class="sv">EVM+CW</div><div class="sl">Dual Runtime</div></div>
+  <div class="si"><div class="sv">1.8B</div><div class="sl">Total Supply</div></div>
+</div>
+
+<!-- BASICS -->
+<section id="basics">
+  <div class="rev">
+    <p class="s-tag">Start Here</p>
+    <h2 class="s-title">New to KiiChain? Read This First.</h2>
+    <p class="s-desc">Before deploying anything, understand how KiiChain works. It supports two address formats and two types of smart contracts running simultaneously on the same chain.</p>
+  </div>
+  <div class="concepts rev">
+    <div class="concept"><p class="ct">What is KiiChain?</p><h3 class="ch">Layer 1 FX Blockchain</h3><p class="cb">KiiChain is a Layer 1 blockchain built on Cosmos SDK. It is designed as the first 24/7 onchain FX settlement layer for stablecoins and Real World Assets, targeting emerging markets.</p></div>
+    <div class="concept"><p class="ct">Two Address Formats</p><h3 class="ch">EVM vs Cosmos Addresses</h3><p class="cb">Your wallet has two addresses for the same account. EVM: <span style="color:var(--cy)">0x1234...abcd</span>, Cosmos: <span style="color:var(--go)">kii1234...abcd</span>. Both point to the same funds. Use EVM with MetaMask and Hardhat.</p></div>
+    <div class="concept"><p class="ct">Two Contract Types</p><h3 class="ch">Solidity vs CosmWasm</h3><p class="cb">Deploy Solidity contracts using Hardhat, Remix, or Foundry, just like Ethereum. Also deploy CosmWasm contracts in Rust, which are required for the RWA Protocol.</p></div>
+    <div class="concept"><p class="ct">Gas Token</p><h3 class="ch">KII Token</h3><p class="cb">KII is the native token for transaction fees. The smallest unit is <span style="color:var(--cy)">akii</span>, where 1 KII equals 10^18 akii, similar to how 1 ETH equals 10^18 wei. On Testnet, KII is free.</p></div>
+    <div class="concept"><p class="ct">Current Status</p><h3 class="ch">Testnet Oro (Active)</h3><p class="cb">KiiChain is on Testnet Oro, the permanent public testnet. Public Mainnet launch is planned for Q2 2026. All builds, hackathons, and deployments happen on Testnet Oro today.</p></div>
+    <div class="concept"><p class="ct">Fee Abstraction</p><h3 class="ch">Pay Gas with Stablecoins</h3><p class="cb">The Fee Abstraction module lets users pay transaction fees using stablecoins instead of KII. Prices are calculated via TWAP from the Oracle module, making the chain accessible to stablecoin holders.</p></div>
+  </div>
+  <div class="steps rev">
+    <div class="step"><div class="stn">01</div><h3 class="stt">Add KiiChain to MetaMask</h3><p class="stb">Open MetaMask and add a custom network using the details in the Network section. Use Chain ID 1336 and the EVM JSON-RPC endpoint.</p><div class="stc">Chain ID: 1336<br>Symbol: KII</div></div>
+    <div class="step"><div class="stn">02</div><h3 class="stt">Get Free KII Tokens</h3><p class="stb">Visit the faucet at explorer.kiichain.io/faucet or use the Discord #faucet channel to receive free testnet KII every 24 hours.</p><div class="stc">explorer.kiichain.io/faucet</div></div>
+    <div class="step"><div class="stn">03</div><h3 class="stt">Install Node.js</h3><p class="stb">Download Node.js v18 or higher from nodejs.org. This is required to run Hardhat, the main deployment tool used in this guide.</p><div class="stc">node --version<br>npm --version</div></div>
+    <div class="step"><div class="stn">04</div><h3 class="stt">Deploy Your Contract</h3><p class="stb">Follow the Hardhat or Remix tab in the Deploy section and use the provided KiiToken.sol example to deploy your first contract.</p><div class="stc">npx hardhat run<br>scripts/deploy.js</div></div>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section id="modules">
+  <div class="rev">
+    <p class="s-tag">Core Modules</p>
+    <h2 class="s-title">5 Modules to Build With</h2>
+    <p class="s-desc">KiiChain is purpose-built for five financial use cases. Each module has dedicated tools, contracts, and SDKs for building applications that serve emerging markets.</p>
+  </div>
+  <div class="g3 rev">
+    <div class="mod c1"><p class="mn">01 / RWA</p><div class="mi" style="background:rgba(107,33,255,0.15)"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 7l7-4 7 4M4 7v14M20 7v14M8 11v5M12 11v5M16 11v5" stroke="url(#g_rwa)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g_rwa" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></div><h3 class="mt">Real World Assets</h3><p class="mb">Tokenize real-world assets like real estate, bonds, or commodities using the T-REX protocol with CosmWasm contracts. Includes onchain KYC/KYB identity management, a trusted issuers registry, modular compliance rules, and ONCHAINID. Creates a unified liquidity layer for tokenized assets.</p><div class="tags"><span class="tag">T-REX Protocol</span><span class="tag">CosmWasm</span><span class="tag">KYC / KYB</span><span class="tag">Identity Registry</span><span class="tag">Compliance</span><span class="tag">ONCHAINID</span></div></div>
+    <div class="mod c2"><p class="mn">02 / STABLECOINS</p><div class="mi" style="background:rgba(34,211,238,0.1)"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="url(#g_st)" stroke-width="1.7"/><path d="M12 6v2M12 16v2M9 9.5c0-1 1.3-2 3-2s3 1 3 2-1.3 2-3 2-3 1-3 2 1.3 2 3 2 3-1 3-2" stroke="url(#g_st2)" stroke-width="1.7" stroke-linecap="round"/><defs><linearGradient id="g_st" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="g_st2" x1="9" y1="7" x2="15" y2="17"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg></div><h3 class="mt">Stablecoin Layer</h3><p class="mb">Create and manage non-dollar stablecoins using the TokenFactory module. The Fee Abstraction module lets users pay gas fees with stablecoins using TWAP-based Oracle pricing, so users never need to hold native KII to interact with the chain.</p><div class="tags"><span class="tag">Gas Abstraction</span><span class="tag">TokenFactory</span><span class="tag">TWAP Pricing</span><span class="tag">Fee Abstraction</span><span class="tag">ERC20</span><span class="tag">Oracle</span></div></div>
+    <div class="mod c3"><p class="mn">03 / FX</p><div class="mi" style="background:rgba(245,158,11,0.12)"><svg viewBox="0 0 24 24" fill="none"><path d="M7 16V8m0 0L4 11m3-3 3 3M17 8v8m0 0 3-3m-3 3-3-3" stroke="url(#g_fx)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="12" r="5" stroke="url(#g_fx2)" stroke-width="1.2" stroke-dasharray="2 2"/><circle cx="17" cy="12" r="5" stroke="url(#g_fx3)" stroke-width="1.2" stroke-dasharray="2 2"/><defs><linearGradient id="g_fx" x1="4" y1="8" x2="20" y2="16"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#EF4444"/></linearGradient><linearGradient id="g_fx2" x1="2" y1="7" x2="12" y2="17"><stop stop-color="#F59E0B" stop-opacity="0.4"/><stop offset="1" stop-color="#EF4444" stop-opacity="0.4"/></linearGradient><linearGradient id="g_fx3" x1="12" y1="7" x2="22" y2="17"><stop stop-color="#F59E0B" stop-opacity="0.4"/><stop offset="1" stop-color="#EF4444" stop-opacity="0.4"/></linearGradient></defs></svg></div><h3 class="mt">Onchain FX Layer</h3><p class="mb">The first 24/7 onchain foreign exchange settlement layer. A hybrid matching engine sources liquidity across 100+ IBC-connected chains, enabling instant cross-border payments with institutional pricing for non-dollar stablecoin pairs.</p><div class="tags"><span class="tag">Cross-Border</span><span class="tag">IBC</span><span class="tag">24/7 Liquidity</span><span class="tag">Instant Settlement</span><span class="tag">Oracle Pricing</span></div></div>
+    <div class="mod c4"><p class="mn">04 / CREDIFI</p><div class="mi" style="background:rgba(16,185,129,0.12)"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="url(#g_cr)" stroke-width="1.7"/><path d="M3 10h18M7 14h3M7 17h5" stroke="url(#g_cr2)" stroke-width="1.7" stroke-linecap="round"/><defs><linearGradient id="g_cr" x1="3" y1="6" x2="21" y2="19"><stop stop-color="#10B981"/><stop offset="1" stop-color="#6B21FF"/></linearGradient><linearGradient id="g_cr2" x1="3" y1="13" x2="21" y2="17"><stop stop-color="#10B981"/><stop offset="1" stop-color="#6B21FF"/></linearGradient></defs></svg></div><h3 class="mt">CrediFi Protocol</h3><p class="mb">Decentralized credit infrastructure for businesses in emerging markets. Provides TVL-based loans, collateral management, interest rate models, and community-funded credit pools. Supports invoice financing and revenue lending for web2 and web3 companies.</p><div class="tags"><span class="tag">TVL Loans</span><span class="tag">Collateral</span><span class="tag">Invoice Financing</span><span class="tag">Revenue Lending</span><span class="tag">Credit Pools</span></div></div>
+    <div class="mod c5"><p class="mn">05 / PAYFI</p><div class="mi" style="background:rgba(239,68,68,0.1)"><svg viewBox="0 0 24 24" fill="none"><path d="M13 3L5 13h7l-1 8 8-10h-7l1-8z" stroke="url(#g_pf)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g_pf" x1="5" y1="3" x2="19" y2="21"><stop stop-color="#EF4444"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs></svg></div><h3 class="mt">PayFi Module</h3><p class="mb">Gas-optimized payment infrastructure for merchant transactions. The Paymaster system can sponsor gas so users do not need KII. Supports recurring payment scheduling, invoice financing, and TVL-based credit card financing through community Payfi pools.</p><div class="tags"><span class="tag">Paymaster</span><span class="tag">Merchant TX</span><span class="tag">Payment Schedule</span><span class="tag">Gas Optimized</span><span class="tag">DeFi</span></div></div>
+    <div class="mod c6"><p class="mn">INFRASTRUCTURE</p><div class="mi" style="background:rgba(139,92,246,0.12)"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3z" stroke="url(#g_inf)" stroke-width="1.5"/><path d="M12 8v4l3 3" stroke="url(#g_inf2)" stroke-width="1.7" stroke-linecap="round"/><path d="M8 3.5C6 5 4.5 7 4 9.5M16 3.5c2 1.5 3.5 3.5 4 6" stroke="url(#g_inf3)" stroke-width="1.3" stroke-linecap="round"/><defs><linearGradient id="g_inf" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#F59E0B"/></linearGradient><linearGradient id="g_inf2" x1="9" y1="8" x2="15" y2="15"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="g_inf3" x1="4" y1="3" x2="20" y2="10"><stop stop-color="#8B5CF6" stop-opacity="0.6"/><stop offset="1" stop-color="#F59E0B" stop-opacity="0.6"/></linearGradient></defs></svg></div><h3 class="mt">Developer Tools</h3><p class="mb">Full EVM and CosmWasm dual runtime. Oracle price feeds from validators for accurate pricing. TokenFactory for permissionless custom token creation. Precompiled contracts for Cosmos modules from Solidity. KiiJS TypeScript SDK and Rust SDK for RWA interactions.</p><div class="tags"><span class="tag">EVM</span><span class="tag">CosmWasm</span><span class="tag">Oracle</span><span class="tag">Precompiles</span><span class="tag">IBC</span><span class="tag">KiiJS SDK</span></div></div>
+  </div>
+</section>
+
+<!-- DEPLOY -->
+<section id="deploy">
+  <div class="rev">
+    <p class="s-tag">Deployment</p>
+    <h2 class="s-title">4 Ways to Deploy</h2>
+    <p class="s-desc">Choose based on your experience. Remix requires no installation and is ideal for beginners. Hardhat is recommended for serious projects. Foundry suits advanced users. CosmWasm is required for RWA contracts.</p>
+  </div>
+  <div class="g4 rev" style="margin-bottom:28px">
+    <div class="gc"><div class="gci"><svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(34,211,238,0.1)"/><rect x="8" y="8" width="20" height="20" rx="4" stroke="url(#g_re)" stroke-width="1.5"/><path d="M12 14h8M12 18h5M12 22h6" stroke="url(#g_re2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="g_re" x1="8" y1="8" x2="28" y2="28"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="g_re2" x1="12" y1="14" x2="20" y2="22"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg></div><h3 class="gct">Remix IDE</h3><p class="gcb">Browser-based, no installation. Connect MetaMask and deploy. Start here if you are new to smart contracts.</p></div>
+    <div class="gc"><div class="gci"><svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(107,33,255,0.1)"/><path d="M10 22c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="url(#g_hh)" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="22" width="20" height="3" rx="1.5" fill="url(#g_hh2)"/><path d="M18 10v4" stroke="url(#g_hh3)" stroke-width="1.8" stroke-linecap="round"/><defs><linearGradient id="g_hh" x1="10" y1="14" x2="26" y2="25"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="g_hh2" x1="8" y1="22" x2="28" y2="25"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="g_hh3" x1="18" y1="10" x2="18" y2="14"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg></div><h3 class="gct">Hardhat</h3><p class="gcb">JavaScript framework with scripts, testing, and env variables. Recommended for real project deployments.</p></div>
+    <div class="gc"><div class="gci"><svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(245,158,11,0.1)"/><path d="M12 26l-2-12 8-6 8 6-2 12H12z" stroke="url(#g_fo)" stroke-width="1.7" stroke-linejoin="round"/><path d="M18 8v18M14 14l8 4M22 14l-8 4" stroke="url(#g_fo2)" stroke-width="1.3" stroke-linecap="round"/><defs><linearGradient id="g_fo" x1="10" y1="8" x2="26" y2="26"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#EF4444"/></linearGradient><linearGradient id="g_fo2" x1="14" y1="8" x2="22" y2="26"><stop stop-color="#F59E0B" stop-opacity="0.7"/><stop offset="1" stop-color="#EF4444" stop-opacity="0.7"/></linearGradient></defs></svg></div><h3 class="gct">Foundry</h3><p class="gcb">Rust-based toolkit with fast compilation. Simulate before broadcasting. Best for advanced users.</p></div>
+    <div class="gc"><div class="gci"><svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(16,185,129,0.1)"/><circle cx="18" cy="18" r="7" stroke="url(#g_cw)" stroke-width="1.7"/><ellipse cx="18" cy="18" rx="7" ry="3" stroke="url(#g_cw2)" stroke-width="1.3" transform="rotate(60 18 18)"/><ellipse cx="18" cy="18" rx="7" ry="3" stroke="url(#g_cw3)" stroke-width="1.3" transform="rotate(-60 18 18)"/><circle cx="18" cy="18" r="2" fill="url(#g_cw4)"/><defs><linearGradient id="g_cw" x1="11" y1="11" x2="25" y2="25"><stop stop-color="#10B981"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="g_cw2" x1="11" y1="15" x2="25" y2="21"><stop stop-color="#10B981" stop-opacity="0.6"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0.6"/></linearGradient><linearGradient id="g_cw3" x1="11" y1="21" x2="25" y2="15"><stop stop-color="#8B5CF6" stop-opacity="0.6"/><stop offset="1" stop-color="#10B981" stop-opacity="0.6"/></linearGradient><linearGradient id="g_cw4" x1="16" y1="16" x2="20" y2="20"><stop stop-color="#10B981"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></div><h3 class="gct">CosmWasm</h3><p class="gcb">Rust contracts compiled to WebAssembly. Required for the RWA Protocol T-REX implementation.</p></div>
+  </div>
+  <div class="tabs-wrap rev">
+    <div class="tabs-nav">
+      <button class="tnav on" onclick="sw('remix',this)">Remix (Beginner)</button>
+      <button class="tnav" onclick="sw('hardhat',this)">Hardhat</button>
+      <button class="tnav" onclick="sw('foundry',this)">Foundry</button>
+      <button class="tnav" onclick="sw('cosmwasm',this)">CosmWasm</button>
+      <button class="tnav" onclick="sw('contract',this)">KiiToken.sol</button>
+      <button class="tnav" onclick="sw('deployscript',this)">deploy.js</button>
+      <button class="tnav" onclick="sw('kiijs',this)">KiiJS SDK</button>
+      <button class="tnav" onclick="sw('rust',this)">Rust SDK</button>
+    </div>
+    <div class="tpane on" id="tp-remix"><div class="pw"><pre><span class="cm">// REMIX IDE — https://remix.ethereum.org</span>
+<span class="cm">// No installation required. Works in any browser.</span>
+
+<span class="cm">// STEP 1: Add KiiChain to MetaMask</span>
+<span class="cm">// Network Name : Kii Testnet Oro</span>
+<span class="cm">// RPC URL      : https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/</span>
+<span class="cm">// Chain ID     : 1336</span>
+<span class="cm">// Symbol       : KII</span>
+<span class="cm">// Explorer     : https://explorer.kiichain.io</span>
+
+<span class="cm">// STEP 2: Get free KII from the faucet</span>
+<span class="cm">// https://explorer.kiichain.io/faucet</span>
+
+<span class="cm">// STEP 3: Open Remix, create KiiToken.sol in contracts/ folder</span>
+<span class="cm">// Paste the code from the KiiToken.sol tab</span>
+
+<span class="cm">// STEP 4: Compile settings (required for KiiChain)</span>
+<span class="cm">// Compiler version : 0.8.20</span>
+<span class="cm">// EVM Version      : london  &lt;-- required for Testnet Oro</span>
+<span class="cm">// Optimizer        : enabled, 200 runs</span>
+<span class="cm">// Click Compile KiiToken.sol</span>
+
+<span class="cm">// STEP 5: Deploy</span>
+<span class="cm">// Environment : Injected Provider - MetaMask</span>
+<span class="cm">// Chain ID must show 1336</span>
+<span class="cm">// Deploy field : 1000000 (initial supply)</span>
+<span class="cm">// Click Deploy and confirm in MetaMask</span>
+
+<span class="cm">// TROUBLESHOOTING</span>
+<span class="cm">// "Transaction failed (status 0x0)" - set EVM Version to london and recompile</span>
+<span class="cm">// MetaMask shows wrong network - switch to Kii Testnet Oro (Chain ID 1336)</span></pre></div>
+      <div class="info"><strong>Tip for beginners:</strong> Remix saves everything in your browser. No setup needed. Just open the site, paste the contract, compile with the correct settings, and deploy.</div>
+    </div>
+    <div class="tpane" id="tp-hardhat"><div class="pw"><button class="cp" onclick="cpc('tp-hardhat')">COPY</button><pre><span class="cm">// STEP 1: Create project and install dependencies</span>
+mkdir kiichain-project
+cd kiichain-project
+npm init -y
+npm install --save-dev <span class="str">hardhat@2.22.19</span>
+npm install --save-dev <span class="str">@nomicfoundation/hardhat-ethers@3.0.0</span>
+npm install --save-dev <span class="str">ethers@6.4.0</span>
+npm install <span class="str">dotenv</span>
+
+<span class="cm">// STEP 2: Initialize the project</span>
+npx hardhat
+<span class="cm">// Choose: Create a JavaScript project</span>
+
+<span class="cm">// STEP 3: Replace hardhat.config.js</span>
+<span class="fn">require</span>(<span class="str">"@nomicfoundation/hardhat-ethers"</span>);
+<span class="fn">require</span>(<span class="str">"dotenv"</span>).<span class="fn">config</span>();
+
+module.exports = {
+  solidity: {
+    version: <span class="str">"0.8.20"</span>,
+    settings: {
+      optimizer: { enabled: <span class="kw">true</span>, runs: <span class="num">200</span> },
+      evmVersion: <span class="str">"london"</span>
+    }
+  },
+  networks: {
+    kiichain: {
+      url: <span class="str">"https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/"</span>,
+      chainId: <span class="num">1336</span>,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+  },
+};
+
+<span class="cm">// STEP 4: Create .env file (NEVER commit to GitHub)</span>
+PRIVATE_KEY=your_wallet_private_key_here
+
+<span class="cm">// STEP 5: Deploy</span>
+npx hardhat run scripts/deploy.js --network kiichain</pre></div>
+      <div class="warn"><strong>Security:</strong> Never share your private key. Never commit the .env file to GitHub.</div>
+    </div>
+    <div class="tpane" id="tp-foundry"><div class="pw"><button class="cp" onclick="cpc('tp-foundry')">COPY</button><pre><span class="cm">// STEP 1: Install Foundry</span>
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+
+<span class="cm">// STEP 2: Create project</span>
+forge init myproject
+cd myproject
+
+<span class="cm">// STEP 3: Build</span>
+forge build
+
+<span class="cm">// STEP 4: Simulate (no real transaction)</span>
+forge script script/MyContract.s.sol:MyContractScript \
+  --fork-url https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/ \
+  --private-key YOUR_PRIVATE_KEY
+
+<span class="cm">// STEP 5: Broadcast (real deploy)</span>
+forge script script/MyContract.s.sol:MyContractScript \
+  --fork-url https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/ \
+  --private-key YOUR_PRIVATE_KEY \
+  --broadcast
+
+<span class="cm">// Script template</span>
+<span class="kw">pragma solidity</span> ^<span class="num">0.8.13</span>;
+<span class="kw">import</span> {Script} <span class="kw">from</span> <span class="str">"forge-std/Script.sol"</span>;
+<span class="kw">import</span> {MyContract} <span class="kw">from</span> <span class="str">"../src/MyContract.sol"</span>;
+<span class="kw">contract</span> <span class="fn">MyContractScript</span> <span class="kw">is</span> Script {
+    <span class="kw">function</span> <span class="fn">run</span>() <span class="kw">public</span> {
+        vm.<span class="fn">startBroadcast</span>();
+        <span class="kw">new</span> <span class="fn">MyContract</span>();
+        vm.<span class="fn">stopBroadcast</span>();
+    }
+}</pre></div></div>
+    <div class="tpane" id="tp-cosmwasm"><div class="pw"><button class="cp" onclick="cpc('tp-cosmwasm')">COPY</button><pre><span class="cm">// CosmWasm = Rust contracts compiled to WebAssembly</span>
+<span class="cm">// Required for the RWA Protocol T-REX implementation</span>
+
+<span class="cm">// STEP 1: Install Rust toolchain</span>
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default stable
+rustup target add wasm32-unknown-unknown
+cargo install cargo-generate --features vendored-openssl
+
+<span class="cm">// STEP 2: Create contract from template</span>
+cargo generate --git https://github.com/CosmWasm/cosmwasm-template.git \
+  --name my-rwa-contract
+cd my-rwa-contract
+
+<span class="cm">// STEP 3: Compile to WebAssembly</span>
+cargo wasm
+cargo schema
+
+<span class="cm">// STEP 4: Store contract code on KiiChain (get CODE_ID back)</span>
+kiichaind tx wasm store artifacts/my_rwa_contract.wasm \
+  --from my-key --gas auto --gas-adjustment 1.2 \
+  --node https://rpc.uno.sentry.testnet.v3.kiivalidator.com/ \
+  --chain-id oro_1336-1
+
+<span class="cm">// STEP 5: Instantiate using CODE_ID from step 4</span>
+kiichaind tx wasm instantiate CODE_ID <span class="str">'{}'</span> \
+  --from my-key --label <span class="str">"My RWA Contract"</span> \
+  --node https://rpc.uno.sentry.testnet.v3.kiivalidator.com/ \
+  --chain-id oro_1336-1
+
+<span class="cm">// STEP 6: Execute a contract method</span>
+kiichaind tx wasm execute CONTRACT_ADDRESS \
+  <span class="str">'{"register_identity": {"address": "kii1..."}}'</span> \
+  --from my-key --chain-id oro_1336-1</pre></div>
+      <div class="info"><strong>RWA Protocol:</strong> The full T-REX suite is at github.com/KiiChain/Kii-RWA-Protocol. Includes Identity Registry, Trusted Issuers, Modular Compliance, ONCHAINID, and T-REX Factory.</div>
+    </div>
+    <div class="tpane" id="tp-contract"><div class="pw"><button class="cp" onclick="cpc('tp-contract')">COPY</button><pre><span class="cm">// KiiToken.sol — Save as: contracts/KiiToken.sol</span>
+<span class="cm">// SPDX-License-Identifier: MIT</span>
+<span class="kw">pragma solidity</span> ^<span class="num">0.8.20</span>;
+
+<span class="kw">contract</span> <span class="fn">KiiToken</span> {
+    <span class="kw">string public</span> name = <span class="str">"KiiToken"</span>;
+    <span class="kw">string public</span> symbol = <span class="str">"KII"</span>;
+    <span class="kw">uint8 public</span> decimals = <span class="num">18</span>;
+    <span class="kw">uint256 public</span> totalSupply;
+    <span class="kw">address public</span> owner;
+    <span class="kw">mapping</span>(address => <span class="kw">uint256</span>) <span class="kw">public</span> balanceOf;
+    <span class="kw">event</span> <span class="fn">Transfer</span>(address <span class="kw">indexed</span> from, address <span class="kw">indexed</span> to, <span class="kw">uint256</span> value);
+    <span class="kw">event</span> <span class="fn">Mint</span>(address <span class="kw">indexed</span> to, <span class="kw">uint256</span> value);
+
+    <span class="kw">constructor</span>(<span class="kw">uint256</span> _initialSupply) {
+        owner = <span class="kw">msg</span>.sender;
+        totalSupply = _initialSupply * (<span class="num">10</span> ** decimals);
+        balanceOf[<span class="kw">msg</span>.sender] = totalSupply;
+        <span class="kw">emit</span> <span class="fn">Mint</span>(<span class="kw">msg</span>.sender, totalSupply);
+    }
+
+    <span class="kw">function</span> <span class="fn">transfer</span>(address _to, <span class="kw">uint256</span> _amount) <span class="kw">public returns</span> (<span class="kw">bool</span>) {
+        <span class="kw">require</span>(balanceOf[<span class="kw">msg</span>.sender] >= _amount, <span class="str">"Not enough balance"</span>);
+        <span class="kw">require</span>(_to != address(<span class="num">0</span>), <span class="str">"Invalid address"</span>);
+        balanceOf[<span class="kw">msg</span>.sender] -= _amount;
+        balanceOf[_to] += _amount;
+        <span class="kw">emit</span> <span class="fn">Transfer</span>(<span class="kw">msg</span>.sender, _to, _amount);
+        <span class="kw">return true</span>;
+    }
+
+    <span class="kw">function</span> <span class="fn">mint</span>(address _to, <span class="kw">uint256</span> _amount) <span class="kw">public</span> {
+        <span class="kw">require</span>(<span class="kw">msg</span>.sender == owner, <span class="str">"Only owner can mint"</span>);
+        totalSupply += _amount;
+        balanceOf[_to] += _amount;
+        <span class="kw">emit</span> <span class="fn">Mint</span>(_to, _amount);
+    }
+}</pre></div></div>
+    <div class="tpane" id="tp-deployscript"><div class="pw"><button class="cp" onclick="cpc('tp-deployscript')">COPY</button><pre><span class="cm">// deploy.js — Save as: scripts/deploy.js</span>
+<span class="kw">const</span> { ethers } = <span class="fn">require</span>(<span class="str">"hardhat"</span>);
+
+<span class="kw">async function</span> <span class="fn">main</span>() {
+  console.<span class="fn">log</span>(<span class="str">"Deploying KiiToken to KiiChain Testnet Oro..."</span>);
+  <span class="kw">const</span> [deployer] = <span class="kw">await</span> ethers.<span class="fn">getSigners</span>();
+  console.<span class="fn">log</span>(<span class="str">"Deploying with account:"</span>, deployer.address);
+  <span class="kw">const</span> KiiToken = <span class="kw">await</span> ethers.<span class="fn">getContractFactory</span>(<span class="str">"KiiToken"</span>);
+  <span class="kw">const</span> token = <span class="kw">await</span> KiiToken.<span class="fn">deploy</span>(<span class="num">1000000</span>);
+  console.<span class="fn">log</span>(<span class="str">"TX Hash:"</span>, token.<span class="fn">deploymentTransaction</span>().hash);
+  console.<span class="fn">log</span>(<span class="str">"Deployment complete!"</span>);
+}
+
+main().<span class="fn">catch</span>((error) => {
+  console.<span class="fn">error</span>(error);
+  process.<span class="fn">exit</span>(<span class="num">1</span>);
+});</pre></div>
+      <div class="info"><strong>After deploying:</strong> Copy the transaction hash from the terminal and search for it on explorer.kiichain.io to verify your deployment.</div>
+    </div>
+    <div class="tpane" id="tp-kiijs"><div class="pw"><button class="cp" onclick="cpc('tp-kiijs')">COPY</button><pre><span class="cm">// KiiJS SDK — github.com/KiiChain/kiijs-sdk</span>
+yarn add @kiichain/kiijs-evm ethers viem
+yarn add @kiichain/kiijs-utils @kiichain/kiijs-proto
+
+<span class="cm">// Connect with private key (scripts)</span>
+<span class="kw">import</span> { ethers } <span class="kw">from</span> <span class="str">'ethers'</span>;
+<span class="kw">const</span> provider = <span class="kw">new</span> ethers.<span class="fn">JsonRpcProvider</span>(
+  <span class="str">'https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/'</span>
+);
+<span class="kw">const</span> wallet = <span class="kw">new</span> ethers.<span class="fn">Wallet</span>(<span class="str">"0xyourprivatekey"</span>, provider);
+
+<span class="cm">// Connect with MetaMask (web apps)</span>
+<span class="kw">const</span> bp = <span class="kw">new</span> ethers.<span class="fn">BrowserProvider</span>(window.ethereum);
+<span class="kw">const</span> signer = <span class="kw">await</span> bp.<span class="fn">getSigner</span>();
+
+<span class="cm">// Convert address formats</span>
+<span class="kw">import</span> { HexToBech32, Bech32ToHex } <span class="kw">from</span> <span class="str">'@kiichain/kiijs-utils'</span>;
+<span class="kw">const</span> kiiAddr = <span class="fn">HexToBech32</span>(<span class="str">"0x1234..."</span>);
+<span class="kw">const</span> evmAddr = <span class="fn">Bech32ToHex</span>(<span class="str">"kii1234..."</span>);
+
+<span class="cm">// Use Bank precompile to check balances</span>
+<span class="kw">import</span> { getBankPrecompileEthersV6Contract } <span class="kw">from</span> <span class="str">'@kiichain/kiijs-evm'</span>;
+<span class="kw">const</span> bank = <span class="fn">getBankPrecompileEthersV6Contract</span>(signer);
+<span class="kw">const</span> balances = <span class="kw">await</span> bank.<span class="fn">balances</span>(<span class="str">"your_address"</span>);</pre></div></div>
+    <div class="tpane" id="tp-rust"><div class="pw"><button class="cp" onclick="cpc('tp-rust')">COPY</button><pre><span class="cm">// Rust SDK — github.com/KiiChain/kiirust-sdk</span>
+<span class="kw">use</span> rwa_sdk::RwaClient;
+<span class="kw">use</span> cosmrs::crypto::secp256k1::SigningKey;
+
+#[tokio::main]
+<span class="kw">async fn</span> <span class="fn">main</span>() -> Result<(), Box<dyn std::error::Error>> {
+    <span class="kw">let</span> client = RwaClient::<span class="fn">new</span>(
+        <span class="str">"https://rpc.uno.sentry.testnet.v3.kiivalidator.com/"</span>,
+        <span class="str">"oro_1336-1"</span>,
+        <span class="str">"kii1token_contract..."</span>,
+        <span class="str">"kii1identity_registry..."</span>,
+        <span class="str">"kii1compliance..."</span>,
+        <span class="str">"kii"</span>, <span class="str">"gas_price"</span>
+    )?;
+    <span class="kw">let</span> signer = SigningKey::<span class="fn">from_slice</span>(&[<span class="cm">/* private key bytes */</span>])?;
+    <span class="kw">let</span> result = client.<span class="fn">transfer</span>(TransferMessageRequest {
+        from: <span class="str">"kii1sender..."</span>.to_string(),
+        to: <span class="str">"kii1recipient..."</span>.to_string(),
+        amount: <span class="num">100</span>, signer, gas_limit
+    }).<span class="kw">await</span>?;
+    println!(<span class="str">"Transfer hash: {}"</span>, result.hash);
+    Ok(())
+}</pre></div></div>
+  </div>
+</section>
+
+<!-- NETWORK -->
+<section id="network">
+  <div class="rev">
+    <p class="s-tag">Network Info</p>
+    <h2 class="s-title">Connect to Testnet Oro</h2>
+    <p class="s-desc">All endpoints verified from docs.kiiglobal.io. Use EVM JSON-RPC for MetaMask, Hardhat, and Foundry. Use RPC for Cosmos SDK tools.</p>
+  </div>
+  <div class="two-col rev">
+    <div>
+      <div class="nc"><div class="nh"><span class="dot"></span> CHAIN INFORMATION</div>
+        <table class="ti">
+          <tr><td>Network Name</td><td>Kii Testnet Oro</td></tr>
+          <tr><td>Cosmos Chain ID</td><td>oro_1336-1</td></tr>
+          <tr><td>EVM Chain ID</td><td>1336</td></tr>
+          <tr><td>Currency Symbol</td><td>KII</td></tr>
+          <tr><td>Smallest Unit</td><td>akii (1 KII = 10^18 akii)</td></tr>
+          <tr><td>Bech32 Prefix</td><td>kii</td></tr>
+          <tr><td>Total Supply</td><td>1.8B KII</td></tr>
+          <tr><td>Min Gas Price</td><td>1000000000akii</td></tr>
+          <tr><td>Block Explorer</td><td>explorer.kiichain.io</td></tr>
+          <tr><td>Supported Wallets</td><td>MetaMask, Keplr, Leap</td></tr>
+        </table>
+      </div>
+      <div class="nc"><div class="nh">METAMASK SETUP</div>
+        <table class="ti">
+          <tr><td>Network Name</td><td>Kii Testnet Oro</td></tr>
+          <tr><td>RPC URL</td><td>json-rpc.uno.sentry.testnet...</td></tr>
+          <tr><td>Chain ID</td><td>1336</td></tr>
+          <tr><td>Currency Symbol</td><td>KII</td></tr>
+          <tr><td>Block Explorer</td><td>https://explorer.kiichain.io</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="nc"><div class="nh"><span class="dot"></span> SENTRY 1</div>
+        <div class="ep-wrap">
+          <div class="ep"><div><div class="epl">EVM JSON-RPC, use for MetaMask and Hardhat</div><div class="epv">https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://json-rpc.uno.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">RPC, use for Cosmos SDK tools</div><div class="epv">https://rpc.uno.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://rpc.uno.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">REST / LCD</div><div class="epv">https://lcd.uno.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://lcd.uno.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">GRPC</div><div class="epv">grpc.uno.sentry.testnet.v3.kiivalidator.com:443</div></div><button class="epb" onclick="cpt('grpc.uno.sentry.testnet.v3.kiivalidator.com:443',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">Peer, use to connect a validator node</div><div class="epv">5b6aa55124c0fd28e47d7da091a69973964a9fe1@uno.sentry.testnet.v3.kiivalidator.com:26656</div></div><button class="epb" onclick="cpt('5b6aa55124c0fd28e47d7da091a69973964a9fe1@uno.sentry.testnet.v3.kiivalidator.com:26656',this)">COPY</button></div>
+        </div>
+      </div>
+      <div class="nc"><div class="nh"><span class="dot"></span> SENTRY 2</div>
+        <div class="ep-wrap">
+          <div class="ep"><div><div class="epl">EVM JSON-RPC</div><div class="epv">https://json-rpc.dos.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://json-rpc.dos.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">RPC</div><div class="epv">https://rpc.dos.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://rpc.dos.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">REST / LCD</div><div class="epv">https://lcd.dos.sentry.testnet.v3.kiivalidator.com/</div></div><button class="epb" onclick="cpt('https://lcd.dos.sentry.testnet.v3.kiivalidator.com/',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">GRPC</div><div class="epv">grpc.dos.sentry.testnet.v3.kiivalidator.com:443</div></div><button class="epb" onclick="cpt('grpc.dos.sentry.testnet.v3.kiivalidator.com:443',this)">COPY</button></div>
+          <div class="ep"><div><div class="epl">Peer</div><div class="epv">5e6b283c8879e8d1b0866bda20949f9886aff967@dos.sentry.testnet.v3.kiivalidator.com:26656</div></div><button class="epb" onclick="cpt('5e6b283c8879e8d1b0866bda20949f9886aff967@dos.sentry.testnet.v3.kiivalidator.com:26656',this)">COPY</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRECOMPILES -->
+<section id="precompiles">
+  <div class="rev">
+    <p class="s-tag">Precompiled Contracts</p>
+    <h2 class="s-title">Access Cosmos Modules from Solidity</h2>
+    <p class="s-desc">Precompiled contracts are built directly into KiiChain nodes. They have fixed reserved addresses where the zeros are intentional, not errors. Call them from Solidity just like any external contract. All addresses verified from docs.kiiglobal.io.</p>
+  </div>
+  <div class="info rev" style="margin-bottom:24px"><strong>About the zero-filled addresses:</strong> Addresses like <span style="color:var(--cy)">0x0000000000000000000000000000000000000804</span> are real valid contract addresses on KiiChain in the reserved system address space. Call them from your Solidity code the same way you would call any other contract.</div>
+  <div class="g2 rev">
+    <div class="pci"><h3 class="pcn">Bank</h3><p class="pca">0x0000000000000000000000000000000000000804</p><p class="pcd">Check token balances and total supply. Functions: balances(address), supplyOf(denom), totalSupply()</p></div>
+    <div class="pci"><h3 class="pcn">Staking</h3><p class="pca">0x0000000000000000000000000000000000000800</p><p class="pcd">Delegate tokens to validators, undelegate, create validators. Functions: delegate(), undelegate(), validator()</p></div>
+    <div class="pci"><h3 class="pcn">Oracle</h3><p class="pca">0x0000000000000000000000000000000000001003</p><p class="pcd">Read live price feeds submitted by validators. Used by Fee Abstraction for stablecoin gas pricing via TWAP.</p></div>
+    <div class="pci"><h3 class="pcn">Governance</h3><p class="pca">0x0000000000000000000000000000000000000805</p><p class="pcd">Vote on proposals, deposit funds, query governance state. Functions: vote(), getProposal(), getProposals()</p></div>
+    <div class="pci"><h3 class="pcn">IBC</h3><p class="pca">0x0000000000000000000000000000000000001002</p><p class="pcd">Send tokens cross-chain via Inter-Blockchain Communication. Functions: transfer(), transferWithDefaultTimeout()</p></div>
+    <div class="pci"><h3 class="pcn">ICS20</h3><p class="pca">0x0000000000000000000000000000000000000802</p><p class="pcd">Granular IBC transfer permission control over specific channels and denominations.</p></div>
+    <div class="pci"><h3 class="pcn">Wasm</h3><p class="pca">0x0000000000000000000000000000000000001001</p><p class="pcd">Call CosmWasm contracts from Solidity. Functions: execute(), instantiate(), querySmart(), queryRaw()</p></div>
+    <div class="pci"><h3 class="pcn">Bech32</h3><p class="pca">0x0000000000000000000000000000000000000400</p><p class="pcd">Convert between EVM hex (0x...) and Cosmos Bech32 (kii1...) address formats onchain.</p></div>
+    <div class="pci"><h3 class="pcn">Distribution</h3><p class="pca">0x0000000000000000000000000000000000000801</p><p class="pcd">Claim staking rewards, manage withdrawal addresses. Functions: claimRewards(), withdrawDelegatorRewards()</p></div>
+    <div class="pci"><h3 class="pcn">Slashing</h3><p class="pca">0x0000000000000000000000000000000000000806</p><p class="pcd">Query validator signing info, manage penalties. Functions: getSigningInfo(), unjail()</p></div>
+    <div class="pci"><h3 class="pcn">Vesting</h3><p class="pca">0x0000000000000000000000000000000000000803</p><p class="pcd">Interact with the Cosmos Vesting module for locked token and vesting schedule management.</p></div>
+    <div class="pci"><h3 class="pcn">WERC20</h3><p class="pca">0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE</p><p class="pcd">ERC20 wrapper for native KII tokens. Enables using KII in DeFi protocols requiring standard ERC20.</p></div>
+  </div>
+</section>
+
+<!-- FAUCET -->
+<section id="faucet">
+  <div class="rev">
+    <p class="s-tag">Testnet Faucet</p>
+    <h2 class="s-title">Get Free KII Tokens</h2>
+    <p class="s-desc">You need KII to pay for transactions on Testnet Oro. Testnet KII is free, has no monetary value, and only works on the testnet.</p>
+  </div>
+  <div class="two-col rev">
+    <div>
+      <div class="nc"><div class="nh">FAUCET INFORMATION</div>
+        <table class="ti">
+          <tr><td>Explorer Faucet</td><td>explorer.kiichain.io/faucet</td></tr>
+          <tr><td>Frequency</td><td>Once every 24 hours</td></tr>
+          <tr><td>Discord Server</td><td>discord.com/invite/kiichain</td></tr>
+          <tr><td>Discord Channel</td><td>#faucet</td></tr>
+          <tr><td>EVM format</td><td>$request 0x12345...</td></tr>
+          <tr><td>Cosmos format</td><td>$request kii12345...</td></tr>
+        </table>
+      </div>
+      <div class="info" style="margin-top:14px"><strong>Note:</strong> Create your wallet at explorer.kiichain.io before requesting. For larger amounts, ask in the Discord #faucet channel.</div>
+      <div class="warn" style="margin-top:10px"><strong>Testnet tokens have no value.</strong> Never buy or sell testnet KII.</div>
+    </div>
+    <div>
+      <div class="nc"><div class="nh">DISCORD COMMANDS</div>
+        <div class="fcg">
+          <div class="fcmd"><p class="fcn">Request Tokens</p><p class="fcc">$request {address}</p><p class="fcd">Works with 0x and kii1 addresses</p></div>
+          <div class="fcmd"><p class="fcn">Check Balance</p><p class="fcc">$balance [address]</p><p class="fcd">Query any address balance</p></div>
+          <div class="fcmd"><p class="fcn">TX Info</p><p class="fcc">$tx_info [hash]</p><p class="fcd">Look up a transaction</p></div>
+          <div class="fcmd"><p class="fcn">Faucet Status</p><p class="fcc">$faucet_status [chainID]</p><p class="fcd">Check faucet and node status</p></div>
+          <div class="fcmd"><p class="fcn">Faucet Address</p><p class="fcc">$faucet_address [chainID]</p><p class="fcd">Get the faucet wallet address</p></div>
+          <div class="fcmd"><p class="fcn">All Commands</p><p class="fcc">$help</p><p class="fcd">List all available commands</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LINKS -->
+<section id="links">
+  <div class="rev">
+    <p class="s-tag">Resources</p>
+    <h2 class="s-title">Official KiiChain Links</h2>
+    <p class="s-desc">All official resources from the KiiChain team, verified and up to date.</p>
+  </div>
+  <div class="lsec rev">
+    <div class="lcol">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="url(#lnk1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="url(#lnk2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="lnk1" x1="10" y1="10" x2="21" y2="18"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="lnk2" x1="3" y1="6" x2="14" y2="14"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg>KiiChain Official</h3>
+      <a class="lnk" href="https://kiichain.io" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="url(#lg1)" stroke-width="1.7"/><path d="M12 3c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9M3 12h18" stroke="url(#lg2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="lg1" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="lg2" x1="3" y1="12" x2="21" y2="12"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></span><div><div class="ln">KiiChain Website</div><div class="lu">kiichain.io</div></div></a>
+      <a class="lnk" href="https://docs.kiiglobal.io" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="url(#ld1)" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v6h5M9 13h6M9 17h4" stroke="url(#ld2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="ld1" x1="5" y1="3" x2="19" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="ld2" x1="9" y1="3" x2="19" y2="17"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg></span><div><div class="ln">Official Documentation</div><div class="lu">docs.kiiglobal.io</div></div></a>
+      <a class="lnk" href="https://explorer.kiichain.io" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="url(#ls1)" stroke-width="1.7"/><path d="M15.5 15.5L20 20" stroke="url(#ls2)" stroke-width="1.7" stroke-linecap="round"/><defs><linearGradient id="ls1" x1="4" y1="4" x2="17" y2="17"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="ls2" x1="15" y1="15" x2="21" y2="21"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></span><div><div class="ln">Testnet Explorer</div><div class="lu">explorer.kiichain.io</div></div></a>
+      <a class="lnk" href="https://explorer.kiichain.io/faucet" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0012 0c0-4.5-6-11-6-11z" stroke="url(#ldr1)" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 15.5a2.5 2.5 0 002.5 2" stroke="url(#ldr2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="ldr1" x1="6" y1="3" x2="18" y2="20"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="ldr2" x1="9" y1="15" x2="12" y2="18"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="white"/></linearGradient></defs></svg></span><div><div class="ln">Testnet Faucet</div><div class="lu">explorer.kiichain.io/faucet</div></div></a>
+      <a class="lnk" href="https://discord.com/invite/kiichain" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM15 12a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" fill="url(#ldc1)"/><path d="M8.5 5.5C6.5 6.5 5 8 4.5 10c-.8.3-1.5.7-2 1.5v2c.5.8 1.2 1.2 2 1.5.5 2 2 3.5 4 4.5l1-2c1 .3 2 .5 3 .5s2-.2 3-.5l1 2c2-1 3.5-2.5 4-4.5.8-.3 1.5-.7 2-1.5v-2c-.5-.8-1.2-1.2-2-1.5-.5-2-2-3.5-4-4.5l-1 2a10 10 0 00-6 0l-1-2z" stroke="url(#ldc2)" stroke-width="1.5" stroke-linejoin="round"/><defs><linearGradient id="ldc1" x1="7" y1="12" x2="17" y2="15"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="ldc2" x1="2" y1="5" x2="22" y2="20"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></span><div><div class="ln">Official Discord</div><div class="lu">discord.com/invite/kiichain</div></div></a>
+      <a class="lnk" href="https://github.com/KiiChain" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" stroke="url(#lgh1)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="lgh1" x1="2" y1="1" x2="22" y2="22"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></span><div><div class="ln">KiiChain GitHub</div><div class="lu">github.com/KiiChain</div></div></a>
+      <a class="lnk" href="https://github.com/KiiChain/Kii-RWA-Protocol" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="url(#lc1)" stroke-width="1.7"/><path d="M8 7h8M8 11h8M8 15h5" stroke="url(#lc2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="lc1" x1="4" y1="2" x2="20" y2="22"><stop stop-color="#10B981"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="lc2" x1="8" y1="7" x2="16" y2="15"><stop stop-color="#10B981"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg></span><div><div class="ln">RWA Protocol Repository</div><div class="lu">github.com/KiiChain/Kii-RWA-Protocol</div></div></a>
+      <a class="lnk" href="https://github.com/KiiChain/kiijs-sdk" target="_blank"><span class="li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 8L12 3 3 8v8l9 5 9-5V8z" stroke="url(#lp1)" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 8l9 5 9-5M12 13v8" stroke="url(#lp2)" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="lp1" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient><linearGradient id="lp2" x1="3" y1="8" x2="21" y2="21"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg></span><div><div class="ln">KiiJS SDK Repository</div><div class="lu">github.com/KiiChain/kiijs-sdk</div></div></a>
+    </div>
+    <div class="lcol">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="url(#ba1)" stroke-width="2" stroke-linecap="round"/><path d="M22 4L12 14.01l-3-3" stroke="url(#ba2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="ba1" x1="2" y1="2" x2="22" y2="22"><stop stop-color="#10B981"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="ba2" x1="12" y1="4" x2="22" y2="14"><stop stop-color="#10B981"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg>Builder Assets</h3>
+      <div class="info" style="margin-top:0;margin-bottom:14px"><strong>Coming soon:</strong> Links to the GitHub repository and article for this builder guide will be added here once published.</div>
+      <div class="nc"><div class="nh">ABOUT THIS GUIDE</div>
+        <table class="ti">
+          <tr><td>Type</td><td>Builder Guide</td></tr>
+          <tr><td>Target</td><td>Beginner to Intermediate</td></tr>
+          <tr><td>Covers</td><td>RWA, Stablecoins, FX, CrediFi, PayFi</td></tr>
+          <tr><td>Tools</td><td>Hardhat, Remix, Foundry, CosmWasm</td></tr>
+          <tr><td>Network</td><td>KiiChain Testnet Oro</td></tr>
+          <tr><td>Status</td><td>Active, Updated 2026</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section id="proof">
+  <div class="rev">
+    <p class="s-tag">Deployment Proof</p>
+    <h2 class="s-title">Verified on KiiChain Testnet Oro</h2>
+    <p class="s-desc">This smart contract was deployed live as part of building this guide. Verify it on the Explorer.</p>
+  </div>
+  <div class="proof-box rev">
+    <div class="pgrid">
+      <div class="pi"><p class="pil">Contract Address</p><p class="piv">0xe6480d426adb30a87830887f2ca2d7e14a3f7d77</p></div>
+      <div class="pi"><p class="pil">Transaction Hash</p><p class="piv">0xf014e50ab51117f3e7bb3fe389dbd25f8270bbaabf66cb49ab8f1cd478e9aee0</p></div>
+      <div class="pi"><p class="pil">Deployer Address</p><p class="piv">0xdE6ffc68b21e4ce35D43f6B677e0E0C514C6e85e</p></div>
+      <div class="pi"><p class="pil">Status</p><p class="piv"><span class="ok"><span class="dot"></span> SUCCESS</span></p></div>
+      <div class="pi"><p class="pil">Network</p><p class="piv">KiiChain Testnet Oro (Chain ID: 1336)</p></div>
+      <div class="pi"><p class="pil">Block Explorer</p><p class="piv">explorer.kiichain.io</p></div>
+    </div>
+    <div class="okbox" style="margin-top:20px"><strong>How to verify:</strong> Copy the transaction hash above and search for it on explorer.kiichain.io to see the full transaction details, status, and contract address.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="fl">KiiChain Builder Hub 2026, Built for the KiiChain ecosystem</div>
+  <div class="fr">
+    <a href="https://kiichain.io" target="_blank">kiichain.io</a>
+    <a href="https://docs.kiiglobal.io" target="_blank">Official Docs</a>
+    <a href="https://explorer.kiichain.io" target="_blank">Explorer</a>
+    <a href="https://discord.com/invite/kiichain" target="_blank">Discord</a>
+    <a href="https://github.com/KiiChain" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// CURSOR
+// ============================================================
+const curEl = document.getElementById('cur');
+const ringEl = document.getElementById('ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX;
+  my = e.clientY;
+  curEl.style.left = mx + 'px';
+  curEl.style.top = my + 'px';
+});
+
+(function loopRing() {
+  rx += (mx - rx) * 0.11;
+  ry += (my - ry) * 0.11;
+  ringEl.style.left = rx + 'px';
+  ringEl.style.top = ry + 'px';
+  requestAnimationFrame(loopRing);
+})();
+
+// ============================================================
+// PARTICLE CONSTELLATION NETWORK
+// Interactive: particles connect to cursor within radius
+// ============================================================
+const canvas = document.getElementById('pcanvas');
+const ctx = canvas.getContext('2d');
+
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+});
+
+// Particle config
+const PARTICLE_COUNT = 90;
+const CONNECT_DIST = 130;       // connect particles to each other
+const MOUSE_ATTRACT_DIST = 160; // connect particles to mouse
+const MOUSE_PUSH_DIST = 80;    // mouse repels particles slightly
+const SPEED = 0.35;
+
+// Colors matching KiiChain palette
+const COLORS = [
+  'rgba(107,33,255,',
+  'rgba(139,92,246,',
+  'rgba(34,211,238,',
+];
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * SPEED;
+    this.vy = (Math.random() - 0.5) * SPEED;
+    this.r = Math.random() * 1.8 + 0.8;
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    this.alpha = Math.random() * 0.4 + 0.2;
+  }
+  update() {
+    // gentle mouse repulsion
+    const dx = this.x - mx;
+    const dy = this.y - my;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < MOUSE_PUSH_DIST && d > 0) {
+      const force = (MOUSE_PUSH_DIST - d) / MOUSE_PUSH_DIST * 0.4;
+      this.vx += (dx / d) * force;
+      this.vy += (dy / d) * force;
+    }
+    // dampen velocity
+    this.vx *= 0.99;
+    this.vy *= 0.99;
+    this.x += this.vx;
+    this.y += this.vy;
+    // wrap edges
+    if (this.x < 0) this.x = W;
+    if (this.x > W) this.x = 0;
+    if (this.y < 0) this.y = H;
+    if (this.y > H) this.y = 0;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.color + this.alpha + ')';
+    ctx.fill();
+  }
+}
+
+const particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle());
+
+function drawLine(x1, y1, x2, y2, alpha, color) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color + alpha + ')';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+}
+
+function animParticles() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Update and draw particles
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+
+  // Draw particle-to-particle connections
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const a = particles[i];
+      const b = particles[j];
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < CONNECT_DIST) {
+        const alpha = (1 - d / CONNECT_DIST) * 0.18;
+        drawLine(a.x, a.y, b.x, b.y, alpha, 'rgba(107,33,255,');
+      }
+    }
+  }
+
+  // Draw mouse-to-particle connections (the KiiChain interactive effect)
+  particles.forEach(p => {
+    const dx = p.x - mx;
+    const dy = p.y - my;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < MOUSE_ATTRACT_DIST) {
+      const alpha = (1 - d / MOUSE_ATTRACT_DIST) * 0.55;
+      drawLine(mx, my, p.x, p.y, alpha, 'rgba(34,211,238,');
+    }
+  });
+
+  requestAnimationFrame(animParticles);
+}
+
+animParticles();
+
+// ============================================================
+// SCROLL REVEAL
+// ============================================================
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('in'), i * 70);
+    }
+  });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.rev').forEach(el => observer.observe(el));
+
+// ============================================================
+// TABS
+// ============================================================
+function sw(id, el) {
+  document.querySelectorAll('.tnav').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.tpane').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('tp-' + id).classList.add('on');
+}
+
+// ============================================================
+// COPY CODE BLOCK
+// ============================================================
+function cpc(id) {
+  const pre = document.getElementById(id).querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  event.target.innerText = 'COPIED!';
+  setTimeout(() => event.target.innerText = 'COPY', 2000);
+}
+
+// ============================================================
+// COPY TEXT (endpoints)
+// ============================================================
+function cpt(txt, btn) {
+  navigator.clipboard.writeText(txt);
+  btn.innerText = 'COPIED!';
+  setTimeout(() => btn.innerText = 'COPY', 2000);
+}
+</script>
+</body>
+</html>
