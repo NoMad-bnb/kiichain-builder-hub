@@ -56,4 +56,6 @@ Contract deployed live on KiiChain Testnet Oro as part of this guide.
 - Documentation: https://docs.kiiglobal.io
 - Explorer: https://explorer.kiichain.io
 - Discord: https://discord.com/invite/kiichain
+- X: https://x.com/KiiChainio
 - GitHub: https://github.com/KiiChain
+
